@@ -1,0 +1,679 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Meridian Daily</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style id="css">
+/* Layout: sticky masthead → today's story as a live generative hero → day strip → earlier stories grid + rotation rail → full-screen reader; editors get a Write panel */
+:root{
+  --bg:#F2F3F8; --surface:#FFFFFF; --ink:#13152E; --muted:#585D7C; --line:#DADDEA;
+  --accent:#2F43F0; --accent-ink:#FFFFFF; --hot:#E39A00; --shade:rgba(19,21,46,.08); --danger:#C4343A;
+  --f-display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Newsreader",Georgia,"Times New Roman",serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0C0E1E; --surface:#15183A; --ink:#ECEEFF; --muted:#9CA2C8; --line:#272B52;
+  --accent:#8291FF; --accent-ink:#0C0E1E; --hot:#FFC23D; --shade:rgba(0,0,0,.35); --danger:#FF7A7F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C0E1E; --surface:#15183A; --ink:#ECEEFF; --muted:#9CA2C8; --line:#272B52;
+  --accent:#8291FF; --accent-ink:#0C0E1E; --hot:#FFC23D; --shade:rgba(0,0,0,.35); --danger:#FF7A7F; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--bg)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.02em}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.label{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+/* Masthead */
+.mast{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.mast .wrap{display:flex;align-items:center;gap:20px;padding-block:12px}
+.logo{display:flex;align-items:baseline;gap:10px;font-family:var(--f-display);font-weight:800;font-size:26px;letter-spacing:-.04em}
+.logo .sun{width:18px;height:18px;border-radius:50%;background:conic-gradient(from 200deg,var(--accent),var(--hot),var(--accent));align-self:center;animation:spin 18s linear infinite}
+.logo small{font-family:var(--f-mono);font-weight:400;font-size:11px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+@keyframes spin{to{transform:rotate(360deg)}}
+.nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.chip{font-family:var(--f-display);font-weight:600;font-size:14px;padding:7px 13px;border-radius:999px;color:var(--muted);transition:background .2s,color .2s}
+.chip:hover{color:var(--ink);background:var(--shade)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.tools{display:flex;gap:6px;align-items:center;margin-left:auto}
+.nav+.tools{margin-left:0}
+.icon-btn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);position:relative;transition:border-color .2s,transform .2s}
+.icon-btn:hover{border-color:var(--ink);transform:translateY(-1px)}
+.icon-btn svg,.write svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--hot);color:#13152E;font:600 10px/18px var(--f-mono);text-align:center;padding:0 4px}
+.write{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 15px;border-radius:999px;background:var(--ink);color:var(--bg);font:600 14px var(--f-display);transition:transform .2s}
+.write:hover{transform:translateY(-1px)}
+@media (max-width:860px){.nav{display:none}}
+@media (max-width:420px){.write span{display:none}.write{padding:0 11px}}
+
+/* Ticker */
+.ticker{border-bottom:1px solid var(--line);overflow:hidden;white-space:nowrap;font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.ticker-track{display:inline-flex;gap:48px;padding-block:9px;animation:tick 60s linear infinite}
+.ticker:hover .ticker-track{animation-play-state:paused}
+.ticker b{color:var(--accent);font-weight:600;margin-right:8px}
+.ticker button{color:var(--ink)}
+.ticker button:hover{text-decoration:underline}
+@keyframes tick{to{transform:translateX(-50%)}}
+
+/* Hero */
+.hero{position:relative;margin-top:22px;border-radius:24px;overflow:hidden;min-height:440px;display:flex;align-items:flex-end;isolation:isolate;cursor:pointer}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;z-index:-2}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(8,9,24,0) 20%,rgba(8,9,24,.78))}
+.hero-body{padding:clamp(22px,4vw,52px);color:#F5F6FF;max-width:880px}
+.hero-meta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.pill{font:600 11px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.16);backdrop-filter:blur(6px);color:#fff}
+.pill.live{background:#FFC23D;color:#13152E}
+.hero h1{font-size:clamp(38px,6.4vw,84px);line-height:.95;font-weight:800;letter-spacing:-.045em}
+.hero h1 span{display:inline-block;animation:rise .8s cubic-bezier(.2,.8,.2,1) both}
+.hero p{font-size:clamp(17px,1.6vw,21px);max-width:58ch;margin:18px 0 22px;color:rgba(245,246,255,.86)}
+.read-btn{display:inline-flex;align-items:center;gap:10px;background:#F5F6FF;color:#13152E;font:600 15px var(--f-display);padding:12px 20px;border-radius:999px;transition:gap .25s,transform .25s}
+.read-btn:hover{gap:16px;transform:translateY(-2px)}
+.hero-empty{min-height:340px;cursor:default}
+@keyframes rise{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
+
+/* Day strip */
+.editions{margin-top:34px;display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.editions h2{font-size:clamp(28px,3.4vw,40px);font-weight:800}
+.days{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;max-width:100%}
+.days::-webkit-scrollbar{display:none}
+.day{flex:0 0 auto;width:68px;padding:10px 0 9px;border-radius:14px;border:1px solid var(--line);text-align:center;transition:border-color .2s,transform .2s}
+.day:hover{border-color:var(--ink);transform:translateY(-2px)}
+.day .dw{font:600 10.5px var(--f-mono);letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.day .dn{font:800 26px/1.1 var(--f-display)}
+.day .dc{display:flex;align-items:center;justify-content:center;gap:5px;font:400 10px var(--f-mono);color:var(--muted)}
+.day .dc i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.day.today{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.day.today .dw,.day.today .dc{color:var(--accent-ink);opacity:.85}
+.day.today .dc i{box-shadow:0 0 0 1.5px var(--accent-ink)}
+
+/* Grid */
+.main{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:40px;margin-top:22px}
+@media (max-width:980px){.main{grid-template-columns:minmax(0,1fr)}}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;align-content:start}
+@media (max-width:620px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{display:flex;flex-direction:column;text-align:left;background:var(--surface);border-radius:var(--r);overflow:hidden;border:1px solid var(--line);transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s;animation:rise .6s both;cursor:pointer}
+.card:hover{box-shadow:0 22px 50px -24px var(--shade)}
+.card.big{grid-column:1/-1}
+.card .cover{position:relative;aspect-ratio:16/9;max-width:100%}
+.card.big .cover{aspect-ratio:21/9}
+.cover canvas{position:absolute;inset:0;width:100%;height:100%;transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.card:hover .cover canvas{transform:scale(1.04)}
+.cover .glyph{position:absolute;left:16px;bottom:12px;font:800 54px/1 var(--f-display);color:rgba(255,255,255,.9);letter-spacing:-.05em;mix-blend-mode:overlay}
+.card-body{padding:18px 20px 20px;display:flex;flex-direction:column;gap:8px;flex:1}
+.card h3{font-size:23px;line-height:1.12;font-weight:700}
+.card.big h3{font-size:clamp(26px,3vw,36px)}
+.card p{margin:0;color:var(--muted);font-size:16px}
+.card .foot{margin-top:auto;padding-top:10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.cat{font:600 11px var(--f-mono);letter-spacing:.12em;text-transform:uppercase}
+.save{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--muted);flex:none}
+.save:hover{color:var(--ink);background:var(--shade)}
+.save svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8}
+.save[aria-pressed="true"]{color:var(--hot)}
+.save[aria-pressed="true"] svg{fill:currentColor}
+.empty{grid-column:1/-1;padding:56px 20px;text-align:center;border:1px dashed var(--line);border-radius:var(--r);color:var(--muted)}
+.empty h3{color:var(--ink);font-size:24px;margin-bottom:6px}
+
+/* Rail */
+.rail{display:flex;flex-direction:column;gap:30px}
+.rail section{border-top:2px solid var(--ink);padding-top:14px}
+.rot{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column}
+.rot li{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font:600 16px var(--f-display)}
+.rot i{width:12px;height:12px;border-radius:50%;background:var(--c);flex:none}
+.rot .ct{margin-left:auto;font:400 11.5px var(--f-mono);color:var(--muted)}
+.rot .tag{font:600 10px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--hot);color:#13152E}
+.rot .tag.now{background:var(--accent);color:var(--accent-ink)}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.note h3{font-size:20px;margin:6px 0 8px}
+.note p{margin:0;color:var(--muted);font-size:15.5px}
+.streak{display:flex;gap:6px;margin-top:14px}
+.streak i{flex:1;height:30px;border-radius:6px;background:var(--line)}
+.streak i.on{background:var(--accent)}
+
+footer{margin-top:70px;border-top:1px solid var(--line)}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-block:28px;color:var(--muted);font-size:14px}
+
+/* Reader */
+.reader{position:fixed;inset:0;z-index:100;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;opacity:0;visibility:hidden;transform:translateY(24px);transition:opacity .35s,transform .45s cubic-bezier(.2,.8,.2,1),visibility .35s}
+.reader.open{opacity:1;visibility:visible;transform:none}
+.progress{position:sticky;top:0;height:3px;z-index:3;background:transparent}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--hot))}
+.r-bar{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));z-index:4;display:flex;gap:8px}
+.r-bar .icon-btn{background:var(--surface)}
+.r-cover{position:relative;height:clamp(260px,52vh,520px);overflow:hidden}
+.r-cover canvas{position:absolute;inset:0;width:100%;height:100%}
+.r-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,var(--bg))}
+.r-head{max-width:760px;margin:-120px auto 0;position:relative;z-index:2;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.r-head h1{font-size:clamp(36px,5.6vw,68px);line-height:.98;font-weight:800;letter-spacing:-.04em;margin:12px 0 16px}
+.r-head .dek{font-size:clamp(19px,2vw,23px);color:var(--muted);font-style:italic;margin:0}
+.byline{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:22px;padding-block:14px;border-block:1px solid var(--line)}
+.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font:700 14px var(--f-display);background:var(--accent);color:var(--accent-ink)}
+.byline .who{font:600 15px var(--f-display)}
+.r-body{max-width:760px;margin:0 auto;padding:30px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));font-size:20px;line-height:1.65}
+.r-body p{max-width:65ch;margin:0 0 1.15em;overflow-wrap:break-word}
+.r-body p:first-child::first-letter{font:800 4.2em/.8 var(--f-display);float:left;margin:.06em .1em 0 0;color:var(--accent)}
+.r-body blockquote{margin:1.6em 0;padding:0 0 0 22px;border-left:4px solid var(--hot);font:700 clamp(24px,2.8vw,32px)/1.18 var(--f-display);letter-spacing:-.02em}
+.r-body .fact{font-family:var(--f-mono);font-size:13.5px;line-height:1.6;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:1.6em 0;color:var(--muted)}
+.r-body .fact b{color:var(--ink);display:block;letter-spacing:.12em;text-transform:uppercase;font-size:11px;margin-bottom:6px}
+.next{max-width:760px;margin:0 auto 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.next button{width:100%;text-align:left;display:grid;grid-template-columns:120px 1fr;gap:18px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;transition:transform .25s}
+.next button:hover{transform:translateY(-3px)}
+.next .nc{position:relative;height:100%;min-height:96px}
+.next .nc canvas{position:absolute;inset:0;width:100%;height:100%}
+.next h3{font-size:22px;padding:14px 16px 16px 0}
+
+/* Search */
+.search{position:fixed;inset:0;z-index:90;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;justify-content:center;padding:calc(80px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 20px max(16px,env(safe-area-inset-left,0px))}
+.search-box{width:100%;max-width:680px}
+.search input{width:100%;font:700 clamp(26px,4vw,40px) var(--f-display);background:none;border:0;border-bottom:2px solid var(--ink);color:var(--ink);padding:8px 0;outline:none;letter-spacing:-.02em}
+.search input::placeholder{color:var(--muted);opacity:.6}
+.results{margin-top:18px;display:flex;flex-direction:column;max-height:60vh;overflow-y:auto}
+.results button{text-align:left;padding:14px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:3px}
+.results button:hover .rt{color:var(--accent)}
+.rt{font:600 20px var(--f-display)}
+.close-search{position:absolute;top:calc(20px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Editor */
+.editor{position:fixed;inset:0;z-index:120;background:color-mix(in srgb,var(--bg) 72%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow-y:auto;overscroll-behavior:contain;padding:calc(24px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.ed-box{max-width:780px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(18px,3vw,32px);display:flex;flex-direction:column;gap:16px;box-shadow:0 30px 80px -30px var(--shade)}
+.ed-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.ed-head h2{font-size:clamp(24px,3vw,32px);font-weight:800}
+.ed-hint{margin:0;color:var(--muted);font-size:16px}
+.ed-hint b{color:var(--ink);font-weight:600}
+.ed-box label{display:flex;flex-direction:column;gap:6px;font:600 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);min-width:0}
+.ed-box label small{font:italic 400 13px var(--f-body);text-transform:none;letter-spacing:0}
+.ed-box input,.ed-box select,.ed-box textarea{font:400 17px/1.5 var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;text-transform:none;letter-spacing:0}
+.ed-box input:focus,.ed-box select:focus,.ed-box textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.ed-box textarea{resize:vertical;min-height:260px}
+#fTitle{font:700 22px/1.25 var(--f-display)}
+.ed-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ed-row.two{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
+@media (max-width:620px){.ed-row,.ed-row.two{grid-template-columns:minmax(0,1fr)}}
+.ed-error{margin:0;padding:10px 14px;border-radius:10px;border:1px solid var(--danger);color:var(--ink);font-size:15px}
+.ed-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ed-actions .sp{flex:1}
+.ed-pub{background:var(--accent);color:var(--accent-ink);font:600 15px var(--f-display);padding:12px 24px;border-radius:999px}
+.ed-pub:disabled{opacity:.6;cursor:progress}
+.ed-cancel{font:600 15px var(--f-display);padding:12px 18px;border-radius:999px;border:1px solid var(--line)}
+.ed-del{font:600 14px var(--f-display);padding:11px 16px;border-radius:999px;color:var(--danger);border:1px solid currentColor}
+.ed-del.armed{background:var(--danger);color:var(--surface);border-color:var(--danger)}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);font:600 14px var(--f-display);padding:11px 18px;border-radius:999px;opacity:0;transition:all .3s;z-index:200;pointer-events:none;max-width:calc(100vw - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+<div id="root"></div>
+<script type="application/json" id="data">{"stories":[
+{"id":"sunset","d":"2026-10-19","cat":"Science","author":"Abdullah Alhazmi","title":"Why the Sky Turns Orange at Sunset","dek":"It's the same sunlight as noon. It just has to push through much more air to reach you.","body":["Sunlight arrives carrying every color at once. On its way down, it collides with the nitrogen and oxygen molecules in the air, and those molecules scatter short, blue wavelengths far more strongly than long, red ones. Physicists call this Rayleigh scattering, and it's why a clear midday sky looks blue from every direction.","At sunset the geometry changes. The sun sits low on the horizon, so its light travels through many times more atmosphere before it reaches your eyes. By the time it arrives, most of the blue has been scattered off to the side. What's left is the long end of the spectrum: yellows, oranges and deep reds.","Anything else floating in the air adds to the show. Fine dust, sea salt and smoke scatter light in their own ways, which is why sunsets over the ocean or after a wildfire can look almost unreal. After large volcanic eruptions, fine particles high in the atmosphere have painted vivid sunsets around the world for months.","So the next time the sky glows orange, you're seeing a filter at work. The sky has quietly taken the blue for itself and passed you the rest."],"quote":"A sunset is the same sunlight, filtered through more of the sky.","fact":["Scattering strength","Blue light scatters roughly five times more than red, because scattering rises steeply as wavelength gets shorter."]},
+{"id":"buttons","d":"2026-10-18","cat":"Design","author":"Abdullah Alhazmi","title":"Why Every Button Looks the Same Now","dek":"Rounded corners, bold colors, the same spot on every screen. It's not laziness. It's a deal with your memory.","body":["Open a dozen apps and the buttons will look strikingly similar: rounded rectangles, a strong fill color, the main action in the bottom corner. Critics call it boring. Designers call it a convention, and conventions are useful.","People spend most of their time in other apps, not yours. Usability researchers have long pointed out that users expect a new product to work like the ones they already know. Every time a design breaks that expectation, the user pays a small learning cost.","A button that looks like a button saves that cost. Clear fill, enough contrast, and a predictable position all tell people what can be tapped without making them think about it.","The personality of a product hasn't vanished. It has moved into the details: how things animate, the words on the labels, the type and color. The skeleton is shared, and the voice is where brands still stand out."],"quote":"Familiar isn't boring when it means nobody has to stop and think.","fact":["Quick check","Blur a screenshot of your interface. If you can still tell which shape is the main button, its design is doing its job."]},
+{"id":"emoji","d":"2026-10-17","cat":"Culture","author":"Abdullah Alhazmi","title":"A Short History of the Emoji","dek":"It began with 176 tiny pictures on Japanese phones. Now it's how billions say what words can't.","body":["In 1999, designer Shigetaka Kurita created a set of 176 small pictures for NTT Docomo's mobile internet service in Japan. Each one fit in a grid of just 12 by 12 pixels: a sun, a heart, a phone, a face.","They caught on fast in Japan, and other phone companies built their own sets. The trouble was that they didn't match, so a symbol sent from one network could arrive as gibberish on another.","The fix came through Unicode, the standard that lets computers agree on characters. Emoji were added to it in 2010, and once major phone makers put an emoji keyboard on their devices, they spread worldwide.","In 2016 the Museum of Modern Art in New York added Kurita's original set to its collection. Not bad for a few hundred pixels."],"quote":"A tiny picture can carry a tone that a whole sentence might miss.","fact":["Original grid","12 × 12 pixels. That's 144 dots to draw an entire idea."]},
+{"id":"gps","d":"2026-10-16","cat":"Tech","author":"Abdullah Alhazmi","title":"How Your Phone Knows Where You Are","dek":"Satellites, atomic clocks and a dash of Einstein all work together every time you open a map.","body":["GPS satellites orbit about 20,000 kilometres above Earth, and each one constantly broadcasts the exact time and its own position. Your phone listens for those signals and measures how long each one took to arrive.","Because radio waves travel at the speed of light, a delay becomes a distance. With signals from at least four satellites, the receiver can solve for its position and also correct its own, far less accurate, clock.","Timing has to be extraordinarily precise, which is why the satellites carry atomic clocks. Even relativity matters here. Orbiting clocks tick slightly faster than clocks on the ground, by about 38 microseconds a day once all effects are combined. Left uncorrected, that drift would push your location off by kilometres within a single day.","Your phone also cheats a little, in a good way. It uses nearby Wi-Fi networks and cell towers to make a quick first guess, then lets the satellites refine it. That's why your blue dot usually appears in seconds rather than minutes."],"quote":"Every blue dot on a map is really a stopwatch measuring light.","fact":["Minimum satellites","Four. Three pin down your position in space, and the fourth fixes your receiver's clock error."]},
+{"id":"ten-seconds","d":"2026-10-15","cat":"Gaming","author":"Abdullah Alhazmi","title":"The Ten-Second Rule of Game Design","dek":"New players make up their minds almost instantly. The best games use that window well.","body":["Watch someone open a game for the first time and you'll notice how quickly they decide. If nothing interesting happens in the first few seconds, their thumb is already drifting toward the exit. Designers often call this the first-ten-seconds problem.","The fix is to get players doing the core thing right away. Skip the long menus and the wall of rules. If the game is about running, let them run. If it's about collecting, put something shiny within reach. A clear goal on the first screen does more than any tutorial page.","Feedback matters just as much. A sound, a burst of particles, a number ticking up: these tiny rewards tell the player that their action counted. Early wins build the confidence that keeps people around long enough to learn the deeper systems.","The simplest test costs nothing. Hand the game to someone who has never seen it and stay silent. Every moment they look confused is a moment the game needs to explain itself better."],"quote":"If a new player can't tell what to do, the game hasn't started yet.","fact":["Try this today","Record a friend's first minute of play. Mark every pause longer than three seconds. Each one is a design problem to solve."]},
+{"id":"octopus","d":"2026-10-14","cat":"Science","author":"Abdullah Alhazmi","title":"Octopuses Taste With Their Arms","dek":"Every sucker is a tongue, a hand and a nose rolled into one.","body":["An octopus has more in common with a team than a single animal. Most of its neurons sit not in its central brain but spread along its eight arms, which can explore and react with a surprising amount of independence.","Those arms are lined with suckers, and the suckers are packed with sensory cells. They can feel texture and pressure, and they can also detect chemicals on whatever they touch. In effect, an octopus tastes things simply by handling them.","In 2020 a team of researchers at Harvard described special receptor proteins in the sucker cells that respond to chemicals that don't dissolve well in water. That helps explain how an octopus can poke its arm into a crack and know whether a crab is hiding there without ever seeing it.","For an animal that hunts in murky water and rocky crevices, this is a superpower. It turns every surface into information."],"quote":"For an octopus, touching something and tasting it are the same act.","fact":["Neuron split","About two thirds of an octopus's neurons are found in its arms rather than its central brain."]},
+{"id":"dark-mode","d":"2026-10-13","cat":"Design","author":"Abdullah Alhazmi","title":"Color That Works in the Dark","dek":"Dark mode isn't just flipping white to black. Done badly, it's harder to read than the light version.","body":["The lazy way to build dark mode is to invert every color. The result is usually harsh: bright white text glaring off pure black, and accent colors that seem to vibrate.","Good dark themes start with a softer background, often a very deep blue or grey rather than pure black, and text that's a touch dimmer than pure white. That reduces glare while keeping contrast strong.","Bright, saturated colors need taming too. A vivid accent that looks great on white can feel neon on dark, so designers often lighten and soften it. Depth flips as well: instead of shadows, raised surfaces get slightly lighter.","Finally, test everything. Contrast checkers catch text that's too faint, and a quick look in a dark room catches anything that's simply too bright."],"quote":"Dark mode is a second design, not a negative of the first.","fact":["Rule of thumb","Raise elevated surfaces a little lighter than the background instead of relying on shadows, which barely show in the dark."]},
+{"id":"notebook","d":"2026-10-12","cat":"Culture","author":"Abdullah Alhazmi","title":"The Quiet Return of the Paper Notebook","dek":"In a world of infinite apps, some people are choosing a tool that never sends a notification.","body":["Walk into any café and you'll spot them: people writing by hand in small, battered notebooks. It looks like nostalgia, but talk to them and the reasons sound practical.","Writing by hand is slow, and that's the point. You can't copy everything down, so you're forced to decide what matters and put it in your own words. Many people find that this makes ideas stick better than typing them out word for word.","Paper is also blissfully quiet. It doesn't buzz, update or suggest you check something else. For people who spend their working day on screens, a notebook is a place to think without being interrupted.","None of this means giving up digital tools. Most notebook fans still use their phones constantly. They've simply found that the first, messy draft of an idea feels better on paper."],"quote":"A notebook is the only screen that never asks for your attention.","fact":["Small habit","Keep one page a day. Date it, write three lines, and stop. The habit matters more than the length."]},
+{"id":"search-cost","d":"2026-10-11","cat":"Tech","author":"Abdullah Alhazmi","title":"The Hidden Journey of a Single Search","dek":"Your question crosses cables, buildings full of servers and back again before you finish blinking.","body":["Typing a question into a search box feels weightless. In reality it sets off a trip through undersea cables, network switches and warehouse-sized data centers packed with computers.","Those computers need power to run and even more energy to stay cool. Tech companies have spent years making them more efficient, with smarter cooling and custom chips, so each individual search uses very little.","The picture is shifting again as AI-written answers become common. Generating a fresh answer takes more computing work than fetching a list of links, so demand on data centers is climbing.","None of this means you should stop asking questions. It does mean the internet is a physical thing, built from metal, electricity and water, even when it feels like magic."],"quote":"The cloud is made of buildings, cables and a lot of fans.","fact":["Worth knowing","Data centers are often built near cheap power and cool climates, because cooling is one of their biggest costs."]},
+{"id":"collecting","d":"2026-10-10","cat":"Gaming","author":"Abdullah Alhazmi","title":"Why Collecting Things Feels So Good","dek":"Rarity, progress bars and the empty slot that begs to be filled.","body":["Show a player a grid with one empty slot and watch what happens. Most people feel a pull to fill it. Collection systems in games are built around that feeling.","Visible progress does a lot of the work. A bar that reads 47 out of 50 feels urgent in a way that a plain number doesn't. Rarity tiers add excitement, because a rare find is a story the player wants to tell.","Surprise matters too. When rewards arrive unpredictably, every attempt carries a little hope. That's powerful, which is exactly why designers should use it carefully.","The best collection systems make players feel clever and rewarded, not pressured. Give people clear goals, celebrate their progress and let them stop without feeling punished. Players come back to games that respect them."],"quote":"An empty slot is the most persuasive thing on any screen.","fact":["Design check","Can a player see what they have, what's left, and roughly how to get it? If any of those is hidden, the system feels unfair."]},
+{"id":"moon","d":"2026-10-09","cat":"Science","author":"Abdullah Alhazmi","title":"The Moon Is Slowly Drifting Away","dek":"About 3.8 centimetres a year, and we know because astronauts left mirrors behind.","body":["During the Apollo missions, astronauts placed special mirrors called retroreflectors on the Moon's surface. Observatories on Earth still fire lasers at them and time how long the light takes to bounce back.","Those measurements show the Moon moving away from us by roughly 3.8 centimetres a year, about the speed your fingernails grow.","The cause is the tides. The Moon's gravity raises bulges in Earth's oceans, and because Earth spins faster than the Moon orbits, those bulges sit slightly ahead of it. They tug the Moon forward, nudging it into a higher orbit, while friction slowly brakes Earth's spin.","That means our days are getting very slightly longer, by a couple of thousandths of a second per century. You won't notice, but over hundreds of millions of years it adds up."],"quote":"The Moon is leaving at the speed your fingernails grow.","fact":["Drift rate","About 3.8 cm per year, measured by bouncing lasers off mirrors left during the Apollo missions."]},
+{"id":"speedrun","d":"2026-10-08","cat":"Gaming","author":"Abdullah Alhazmi","title":"What Speedrunners Teach Us About Mastery","dek":"They finish games in minutes. The secret is thousands of hours spent on tiny pieces.","body":["A speedrun can look like magic: a player tears through a game that took you a weekend, skipping whole levels with moves you didn't know existed. Behind the run is a method anyone can borrow.","Runners don't practice the whole game over and over. They split it into segments and drill the hardest ones in isolation, sometimes repeating a single jump hundreds of times until it's automatic.","They also plan routes like engineers. Communities share notes, compare split times and test every shortcut. A discovery by one player can shave seconds off everyone's best time within a week.","The lesson works far beyond games. Break a big skill into small parts, practice the weakest part on purpose, and measure your progress honestly. That's how speedrunners get fast, and it's how most people get good at anything."],"quote":"Mastery is just the hardest ten seconds, practiced until they're easy.","fact":["Borrow the method","Pick your weakest section of any skill. Practice only that for ten minutes, then try the full thing again."]}
+]}</script>
+<script id="app">
+(()=>{
+"use strict";
+const FONTS='<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;600&display=swap">';
+const RESET=':root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}';
+const ROTATION=["Science","Gaming","Tech","Culture","Design"];
+const CATS={
+  Science:{c:"#2F43F0",pal:["#0B1240","#2F43F0","#7FD3FF","#FF8A5B","#FFC23D"],style:"rings"},
+  Gaming:{c:"#C2187A",pal:["#1A0628","#C2187A","#7A3CFF","#33E1C4","#FFC23D"],style:"grid"},
+  Tech:{c:"#0F8C7A",pal:["#04201D","#0F8C7A","#3FD6A8","#2F43F0","#E6F7FF"],style:"waves"},
+  Culture:{c:"#D2552A",pal:["#2A0E06","#D2552A","#FFB15C","#F7E2C6","#6A2CB0"],style:"rings"},
+  Design:{c:"#7A3CFF",pal:["#140A33","#7A3CFF","#FF6FB5","#FFC23D","#9DE7FF"],style:"waves"}
+};
+const catOf=s=>CATS[s.cat]||CATS.Science;
+const ICON={
+  search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
+  book:'<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>',
+  moon:'<svg viewBox="0 0 24 24"><path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/></svg>',
+  link:'<svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1"/><path d="M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1"/></svg>',
+  close:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  pen:'<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>'
+};
+const SHELL=`
+<header class="mast"><div class="wrap">
+  <div class="logo"><span class="sun" aria-hidden="true"></span>Meridian<small id="today">Daily</small></div>
+  <nav class="nav" id="nav" aria-label="Subjects"></nav>
+  <div class="tools">
+    <button class="write" id="writeBtn" type="button" hidden>${ICON.pen}<span>Write</span></button>
+    <button class="icon-btn" id="openSearch" type="button" aria-label="Search stories">${ICON.search}</button>
+    <button class="icon-btn" id="savedBtn" type="button" aria-label="Show saved stories">${ICON.book}<span class="badge" id="savedCount" hidden>0</span></button>
+    <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch light or dark">${ICON.moon}</button>
+  </div>
+</div></header>
+<div class="ticker" aria-label="Latest headlines"><div class="ticker-track" id="ticker"></div></div>
+<main class="wrap">
+  <article class="hero" id="hero" tabindex="0" aria-label="Today's story"><canvas id="heroCanvas" aria-hidden="true"></canvas><div class="hero-body" id="heroBody"></div></article>
+  <div class="editions">
+    <div><div class="label">One story a day</div><h2>The last two weeks</h2></div>
+    <div class="days" id="days" role="group" aria-label="Open a day's story"></div>
+  </div>
+  <div class="main">
+    <div>
+      <div class="editions" style="margin-top:6px;margin-bottom:16px"><div><div class="label" id="gridLabel">Archive</div><h2 id="gridTitle">Earlier stories</h2></div></div>
+      <div class="grid" id="grid"></div>
+    </div>
+    <aside class="rail">
+      <section><div class="label">Subject rotation</div><ol class="rot" id="rot"></ol></section>
+      <section class="note">
+        <div class="label">Your reading week</div>
+        <h3 id="streakTitle">Read one story a day</h3>
+        <p>A new story lands every day. Open one to fill in that day's square.</p>
+        <div class="streak" id="streak"></div>
+      </section>
+    </aside>
+  </div>
+</main>
+<footer><div class="wrap"><span>Meridian Daily · one new story every day, rotating through five subjects.</span><span id="footNote"></span></div></footer>
+
+<div class="reader" id="reader" role="dialog" aria-modal="true" aria-labelledby="rTitle" hidden>
+  <div class="progress"><i id="prog"></i></div>
+  <div class="r-bar">
+    <button class="icon-btn" id="rEdit" type="button" aria-label="Edit this story" hidden>${ICON.pen}</button>
+    <button class="icon-btn" id="rSave" type="button" aria-label="Save story">${ICON.book}</button>
+    <button class="icon-btn" id="rCopy" type="button" aria-label="Copy story link">${ICON.link}</button>
+    <button class="icon-btn" id="rClose" type="button" aria-label="Close story">${ICON.close}</button>
+  </div>
+  <div class="r-cover"><canvas id="rCanvas" aria-hidden="true"></canvas></div>
+  <header class="r-head">
+    <div class="cat" id="rCat"></div>
+    <h1 id="rTitle"></h1>
+    <p class="dek" id="rDek"></p>
+    <div class="byline"><span class="avatar" id="rAv"></span><div><div class="who" id="rWho"></div><div class="label" id="rMeta"></div></div></div>
+  </header>
+  <div class="r-body" id="rBody"></div>
+  <div class="next" id="rNext"></div>
+</div>
+
+<div class="search" id="search" hidden>
+  <button class="icon-btn close-search" id="closeSearch" type="button" aria-label="Close search">${ICON.close}</button>
+  <div class="search-box">
+    <label class="label" for="q">Search every story</label>
+    <input id="q" type="search" placeholder="Moon, design, speedrun…" autocomplete="off">
+    <div class="results" id="results"></div>
+  </div>
+</div>
+
+<div class="editor" id="editor" role="dialog" aria-modal="true" aria-labelledby="edTitle" hidden>
+  <form class="ed-box" id="edForm" novalidate>
+    <div class="ed-head"><h2 id="edTitle">Write today's story</h2><button class="icon-btn" id="edClose" type="button" aria-label="Close editor">${ICON.close}</button></div>
+    <p class="ed-hint" id="edHint"></p>
+    <div class="ed-row">
+      <label for="fCat">Subject<select id="fCat">${ROTATION.map(c=>`<option>${c}</option>`).join("")}</select></label>
+      <label for="fDate">Date<input id="fDate" type="date" required></label>
+      <label for="fAuthor">Your name<input id="fAuthor" type="text" maxlength="60" autocomplete="name" required></label>
+    </div>
+    <label for="fTitle">Headline<input id="fTitle" type="text" maxlength="120" required></label>
+    <label for="fDek">Summary <small>One sentence that sits under the headline</small><input id="fDek" type="text" maxlength="220"></label>
+    <label for="fBody">Story <small>Leave an empty line between paragraphs</small><textarea id="fBody" rows="12" required></textarea></label>
+    <label for="fQuote">Pull quote <small>Optional. One short line from the story, shown large</small><input id="fQuote" type="text" maxlength="160"></label>
+    <div class="ed-row two">
+      <label for="fFactT">Fact box title <small>Optional</small><input id="fFactT" type="text" maxlength="60"></label>
+      <label for="fFactB">Fact box text <small>Optional</small><input id="fFactB" type="text" maxlength="300"></label>
+    </div>
+    <p class="ed-error" id="edErr" role="alert" hidden></p>
+    <div class="ed-actions">
+      <button class="ed-del" id="edDel" type="button" hidden>Delete story</button>
+      <span class="sp"></span>
+      <button class="ed-cancel" id="edCancel" type="button">Cancel</button>
+      <button class="ed-pub" id="edPub" type="submit">Publish</button>
+    </div>
+  </form>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>`;
+
+/* ---------- Data ---------- */
+let DATA={stories:[]};
+try{DATA=JSON.parse(document.getElementById("data").textContent)||DATA;}catch(e){}
+if(!Array.isArray(DATA.stories))DATA.stories=[];
+const STORIES=DATA.stories.filter(s=>s&&s.id&&s.title).sort((a,b)=>a.d===b.d?0:(a.d<b.d?1:-1));
+document.getElementById("root").innerHTML=SHELL;
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let saved=new Set(store.get("meridian-saved",[]));
+let readDays=new Set(store.get("meridian-read",[]));
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const words=s=>(s.body||[]).join(" ").split(/\s+/).filter(Boolean).length;
+const mins=s=>Math.max(1,Math.round(words(s)/200));
+const fmtDate=(d,o)=>new Date(d+"T12:00:00").toLocaleDateString("en-GB",o);
+const initials=n=>String(n||"?").trim().split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase()||"?";
+const seedOf=str=>{let h=2166136261;for(const ch of String(str)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
+const isoToday=()=>{const n=new Date();return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}-${String(n.getDate()).padStart(2,"0")}`};
+const TODAY=isoToday();
+const LEAD=STORIES[0]||null;
+let state={cat:"All",savedOnly:false};
+
+/* ---------- Generative cover art ---------- */
+function rng(seed){let s=seed>>>0;return()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296}}
+function paint(cv,story,t=0){
+  if(!cv||!story)return;
+  const w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
+  const c=cv.getContext("2d");c.setTransform(dpr,0,0,dpr,0,0);
+  const cat=catOf(story),p=cat.pal,r=rng(seedOf(story.id));
+  c.globalCompositeOperation="source-over";c.fillStyle=p[0];c.fillRect(0,0,w,h);
+  c.globalCompositeOperation="screen";
+  const m=Math.max(w,h);
+  for(let i=0;i<7;i++){
+    const sp=.00018*(1+i*.35);
+    const x=(r()*w)+Math.sin(t*sp+i*1.7)*w*.12;
+    const y=(r()*h)+Math.cos(t*sp*1.3+i)*h*.14;
+    const rad=(.25+r()*.45)*m;
+    const col=p[1+i%(p.length-1)];
+    const g=c.createRadialGradient(x,y,0,x,y,rad);
+    g.addColorStop(0,col+"cc");g.addColorStop(.55,col+"33");g.addColorStop(1,col+"00");
+    c.fillStyle=g;c.fillRect(0,0,w,h);
+  }
+  c.globalCompositeOperation="source-over";
+  c.strokeStyle="rgba(255,255,255,.22)";c.fillStyle="rgba(255,255,255,.28)";c.lineWidth=1;
+  if(cat.style==="rings"){
+    const cx=w*(.55+r()*.35),cy=h*(.2+r()*.5);
+    for(let k=1;k<16;k++){c.beginPath();c.arc(cx,cy,k*m*.045+((t*.01)%(m*.045)),0,Math.PI*2);c.stroke()}
+  }else if(cat.style==="grid"){
+    const g=Math.max(18,m/34);
+    for(let x=g/2;x<w;x+=g)for(let y=g/2;y<h;y+=g){
+      const s=1+1.6*(.5+.5*Math.sin(x*.02+y*.03+t*.002));c.beginPath();c.arc(x,y,s,0,Math.PI*2);c.fill()}
+  }else{
+    for(let k=0;k<14;k++){c.beginPath();
+      for(let x=0;x<=w;x+=8){const y=h*(.15+k*.06)+Math.sin(x*.012+k*.6+t*.0012)*h*.05;x?c.lineTo(x,y):c.moveTo(x,y)}
+      c.stroke()}
+  }
+}
+
+/* ---------- Rendering ---------- */
+function card(s,big){
+  return `<article class="card${big?" big":""}" data-id="${esc(s.id)}" tabindex="0" aria-label="${esc(s.title)}">
+    <div class="cover"><canvas aria-hidden="true"></canvas><span class="glyph" aria-hidden="true">${esc(String(s.cat).slice(0,2))}</span></div>
+    <div class="card-body">
+      <span class="cat" style="color:${catOf(s).c}">${esc(s.cat)} · ${mins(s)} min</span>
+      <h3>${esc(s.title)}</h3>
+      <p>${esc(s.dek)}</p>
+      <div class="foot"><span class="label">${esc(s.author)} · ${fmtDate(s.d,{day:"numeric",month:"short"})}</span>
+      <button class="save" type="button" data-save="${esc(s.id)}" aria-pressed="${saved.has(s.id)}" aria-label="Save story">${ICON.book}</button></div>
+    </div></article>`;
+}
+function gridList(){
+  if(state.savedOnly)return STORIES.filter(s=>saved.has(s.id));
+  if(state.cat!=="All")return STORIES.filter(s=>s.cat===state.cat);
+  return STORIES.filter(s=>s!==LEAD);
+}
+function renderGrid(){
+  const list=gridList(),grid=$("#grid");
+  if(!list.length){
+    grid.innerHTML=state.savedOnly?`<div class="empty"><h3>No saved stories yet</h3>Tap the bookmark on any story to keep it here.</div>`:`<div class="empty"><h3>Nothing here yet</h3>${state.cat!=="All"?"No "+esc(state.cat)+" stories so far.":"Earlier stories will appear here as new ones are published."}</div>`;
+  }else{
+    grid.innerHTML=list.map((s,i)=>card(s,i===0&&list.length%2===1)).join("");
+    grid.querySelectorAll(".card").forEach((el,i)=>{el.style.animationDelay=Math.min(i*60,600)+"ms"});
+  }
+  if(state.savedOnly){$("#gridLabel").textContent="Your shelf";$("#gridTitle").textContent="Saved stories"}
+  else if(state.cat!=="All"){$("#gridLabel").textContent="Subject";$("#gridTitle").textContent=state.cat}
+  else{$("#gridLabel").textContent="Archive";$("#gridTitle").textContent="Earlier stories"}
+  requestAnimationFrame(paintCards);
+}
+function paintCards(){document.querySelectorAll(".card").forEach(el=>{paint(el.querySelector("canvas"),STORIES.find(s=>s.id===el.dataset.id))})}
+function renderNav(){
+  $("#nav").innerHTML=["All",...ROTATION].map(c=>`<button class="chip" type="button" data-cat="${c}" aria-pressed="${!state.savedOnly&&state.cat===c}">${c==="All"?"All stories":c}</button>`).join("");
+}
+function renderDays(){
+  const seen=new Set(),days=[];
+  for(const s of STORIES){if(!seen.has(s.d)){seen.add(s.d);days.push(s);}if(days.length>=14)break;}
+  $("#days").innerHTML=days.map(s=>`<button class="day${s.d===TODAY?" today":""}" type="button" data-open="${esc(s.id)}" style="--c:${catOf(s).c}" aria-label="${fmtDate(s.d,{weekday:"long",day:"numeric",month:"long"})}: ${esc(s.title)}"><div class="dw">${s.d===TODAY?"Today":fmtDate(s.d,{weekday:"short"})}</div><div class="dn">${fmtDate(s.d,{day:"numeric"})}</div><div class="dc"><i></i>${esc(String(s.cat).slice(0,4))}</div></button>`).join("");
+}
+function nextSubject(){if(!LEAD)return ROTATION[0];const i=ROTATION.indexOf(LEAD.cat);return ROTATION[(i+1)%ROTATION.length];}
+function renderRotation(){
+  const nx=nextSubject();
+  $("#rot").innerHTML=ROTATION.map(c=>{const n=STORIES.filter(s=>s.cat===c).length;const tag=LEAD&&LEAD.cat===c?`<span class="tag now">${LEAD.d===TODAY?"Today":"Latest"}</span>`:(c===nx?`<span class="tag">Up next</span>`:"");return `<li style="--c:${CATS[c].c}"><i></i>${c}${tag}<span class="ct">${n} ${n===1?"story":"stories"}</span></li>`}).join("");
+}
+function renderHero(){
+  const hero=$("#hero");
+  if(!LEAD){
+    hero.classList.add("hero-empty");hero.removeAttribute("tabindex");
+    $("#heroBody").innerHTML=`<div class="hero-meta"><span class="pill live">No stories yet</span></div><h1>The first story is on its way</h1><p>Once a story is published it appears here, and a new one replaces it each day.</p>`;
+    return;
+  }
+  hero.dataset.id=LEAD.id;
+  const t=esc(LEAD.title).split(" ").map((w,i)=>`<span style="animation-delay:${i*70}ms">${w}</span>`).join(" ");
+  $("#heroBody").innerHTML=`<div class="hero-meta"><span class="pill live">${LEAD.d===TODAY?"Today's story":"Latest story"}</span><span class="pill">${esc(LEAD.cat)}</span><span class="pill">${mins(LEAD)} min read</span><span class="pill">${fmtDate(LEAD.d,{weekday:"short",day:"numeric",month:"short"})}</span></div>
+    <h1>${t}</h1><p>${esc(LEAD.dek)}</p><span class="read-btn">Read the story <span aria-hidden="true">→</span></span>`;
+}
+function renderTicker(){
+  if(!STORIES.length){$("#ticker").innerHTML="";return;}
+  const items=STORIES.slice(0,8).map(s=>`<span><b>${esc(s.cat)}</b><button type="button" data-open="${esc(s.id)}">${esc(s.title)}</button></span>`).join("");
+  $("#ticker").innerHTML=items+items.replace(/data-open/g,'tabindex="-1" data-open');
+}
+function renderStreak(){
+  const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`);}
+  $("#streak").innerHTML=days.map(d=>`<i class="${readDays.has(d)?"on":""}" title="${fmtDate(d,{weekday:"long"})}"></i>`).join("");
+  const n=days.filter(d=>readDays.has(d)).length;
+  $("#streakTitle").textContent=n?`${n} of the last 7 days read`:"Read one story a day";
+}
+function updateSavedBadge(){const b=$("#savedCount");b.textContent=saved.size;b.hidden=!saved.size}
+function renderAll(){renderNav();renderGrid()}
+
+/* ---------- Hero animation ---------- */
+let heroOn=true;
+const heroCv=$("#heroCanvas");
+function heroLoop(t){if(heroOn&&LEAD)paint(heroCv,LEAD,t);if(!reduce)requestAnimationFrame(heroLoop)}
+new IntersectionObserver(e=>{heroOn=e[0].isIntersecting}).observe($("#hero"));
+
+/* ---------- Reader ---------- */
+let current=null;
+function openStory(id,push=true){
+  const s=STORIES.find(x=>x.id===id);if(!s)return;current=s;
+  $("#rCat").textContent=`${s.cat} · ${fmtDate(s.d,{weekday:"long",day:"numeric",month:"long"})}`;
+  $("#rCat").style.color=catOf(s).c;
+  $("#rTitle").textContent=s.title;$("#rDek").textContent=s.dek||"";$("#rDek").hidden=!s.dek;
+  $("#rAv").textContent=initials(s.author);$("#rWho").textContent=s.author||"";
+  $("#rMeta").textContent=`${mins(s)} min read · ${words(s)} words`;
+  const b=(s.body||[]).map(p=>`<p>${esc(p)}</p>`);
+  if(s.quote)b.splice(Math.min(2,b.length),0,`<blockquote>${esc(s.quote)}</blockquote>`);
+  if(s.fact&&s.fact[1])b.push(`<div class="fact"><b>${esc(s.fact[0]||"Fact")}</b>${esc(s.fact[1])}</div>`);
+  $("#rBody").innerHTML=b.join("");
+  const idx=STORIES.indexOf(s),nx=STORIES.length>1?STORIES[(idx+1)%STORIES.length]:null;
+  $("#rNext").innerHTML=nx?`<div class="label" style="margin-bottom:10px">Up next</div><button type="button" data-open="${esc(nx.id)}"><div class="nc"><canvas aria-hidden="true"></canvas></div><div><div class="cat" style="color:${catOf(nx).c};padding-top:14px">${esc(nx.cat)} · ${fmtDate(nx.d,{day:"numeric",month:"short"})}</div><h3>${esc(nx.title)}</h3></div></button>`:"";
+  syncReaderSave();
+  const r=$("#reader");r.hidden=false;r.scrollTop=0;
+  requestAnimationFrame(()=>{r.classList.add("open");paint($("#rCanvas"),s);if(nx)paint($("#rNext canvas"),nx);$("#rClose").focus({preventScroll:true})});
+  document.body.style.overflow="hidden";
+  readDays.add(TODAY);store.set("meridian-read",[...readDays]);renderStreak();
+  if(push)try{history.replaceState(null,"","#"+s.id)}catch(e){}
+}
+function closeStory(){
+  const r=$("#reader");r.classList.remove("open");document.body.style.overflow="";
+  setTimeout(()=>{if(!r.classList.contains("open"))r.hidden=true},400);
+  try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
+  current=null;
+}
+function syncReaderSave(){if(!current)return;const on=saved.has(current.id);const b=$("#rSave");b.setAttribute("aria-pressed",on);b.style.color=on?"var(--hot)":"";b.querySelector("svg").style.fill=on?"currentColor":"none"}
+$("#reader").addEventListener("scroll",e=>{const r=e.target;const p=r.scrollTop/(r.scrollHeight-r.clientHeight||1);$("#prog").style.width=(p*100)+"%"});
+
+/* ---------- Search ---------- */
+function openSearch(){const s=$("#search");s.hidden=false;$("#q").value="";doSearch();setTimeout(()=>$("#q").focus(),30)}
+function closeSearch(){$("#search").hidden=true}
+function doSearch(){
+  const q=$("#q").value.trim().toLowerCase();
+  const list=STORIES.filter(s=>!q||[s.title,s.dek,s.cat,s.author,(s.body||[]).join(" ")].join(" ").toLowerCase().includes(q));
+  $("#results").innerHTML=list.length?list.map(s=>`<button type="button" data-open="${esc(s.id)}"><span class="cat" style="color:${catOf(s).c}">${esc(s.cat)} · ${fmtDate(s.d,{day:"numeric",month:"short"})}</span><span class="rt">${esc(s.title)}</span></button>`).join(""):`<p style="color:var(--muted)">No stories match “${esc(q)}”. Try a broader word.</p>`;
+}
+$("#q").addEventListener("input",doSearch);
+
+/* ---------- Editing (people with edit access) ---------- */
+let ART=null,canWrite=false,editing=null;
+const DRAFT_KEY="meridian-draft";
+function buildDoc(stories){
+  const css=document.getElementById("css").textContent;
+  const app=document.getElementById("app").textContent;
+  const json=JSON.stringify({stories},null,0).replace(/</g,"\\u003c");
+  return '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>'+RESET+'</style></head><body>'
+    +'<title>Meridian Daily</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n'+FONTS+'\n<style id="css">'+css+'</style>\n<div id="root"></div>\n<script type="application/json" id="data">'+json+'<\/script>\n<script id="app">'+app+'<\/script>\n</body></html>';
+}
+function showEditing(on){canWrite=on;$("#writeBtn").hidden=!on;$("#rEdit").hidden=!on;$("#footNote").textContent=on?"You can edit this site: use Write to publish today's story.":"Sample stories were written for this demo.";}
+function edErr(msg){const e=$("#edErr");e.textContent=msg||"";e.hidden=!msg;}
+function slug(t){return String(t).toLowerCase().normalize("NFKD").replace(/[^\w\s-]/g,"").trim().replace(/[\s_]+/g,"-").replace(/-+/g,"-").slice(0,48)||"story";}
+function openEditor(story,draft){
+  editing=story||null;
+  const last=store.get("meridian-author","")||"";
+  const src=draft||story||{};
+  $("#edTitle").textContent=story?"Edit story":"Write today's story";
+  $("#fCat").value=src.cat||(story?story.cat:nextSubject());
+  $("#fDate").value=src.d||TODAY;
+  $("#fAuthor").value=src.author!=null?src.author:last;
+  $("#fTitle").value=src.title||"";
+  $("#fDek").value=src.dek||"";
+  $("#fBody").value=Array.isArray(src.body)?src.body.join("\n\n"):(src.body||"");
+  $("#fQuote").value=src.quote||"";
+  $("#fFactT").value=src.fact?src.fact[0]||"":"";
+  $("#fFactB").value=src.fact?src.fact[1]||"":"";
+  const nx=nextSubject();
+  $("#edHint").innerHTML=story?`Changes go live for everyone as soon as you publish.`:`Next subject in the rotation: <b>${esc(nx)}</b>${LEAD?` (the latest story is ${esc(LEAD.cat)})`:""}. Publishing puts it on the front page for everyone.`;
+  const del=$("#edDel");del.hidden=!story;del.classList.remove("armed");del.textContent="Delete story";
+  edErr(draft?"Your unsaved story was brought back. Check it and publish again.":"");
+  $("#edPub").disabled=false;$("#edPub").textContent=story?"Save changes":"Publish";
+  $("#editor").hidden=false;document.body.style.overflow="hidden";
+  setTimeout(()=>$("#fTitle").focus(),40);
+}
+function closeEditor(){$("#editor").hidden=true;editing=null;if(!current)document.body.style.overflow="";}
+function readForm(){
+  const body=$("#fBody").value.replace(/\r/g,"").split(/\n\s*\n/).map(p=>p.replace(/\s*\n\s*/g," ").trim()).filter(Boolean);
+  const factT=$("#fFactT").value.trim(),factB=$("#fFactB").value.trim();
+  return{cat:$("#fCat").value,d:$("#fDate").value,author:$("#fAuthor").value.trim(),title:$("#fTitle").value.trim(),dek:$("#fDek").value.trim(),body,quote:$("#fQuote").value.trim(),fact:factB?[factT||"Worth knowing",factB]:null};
+}
+async function publishStories(stories,okMsg,draft){
+  if(!ART||!canWrite){edErr("Saving isn't available here. Open the site in Claude with edit access to publish.");return false;}
+  try{if(draft)sessionStorage.setItem(DRAFT_KEY,JSON.stringify(draft));}catch(e){}
+  $("#edPub").disabled=true;$("#edPub").textContent="Publishing…";edErr("");
+  try{
+    await ART.publish(buildDoc(stories));
+    try{sessionStorage.removeItem(DRAFT_KEY);}catch(e){}
+    toast(okMsg);
+    return true;
+  }catch(e){
+    const code=e&&e.code;
+    $("#edPub").disabled=false;$("#edPub").textContent=editing?"Save changes":"Publish";
+    if(code==="conflict"){edErr("Someone else saved a newer version just now. The page is reloading with their changes, and your text will come back so you can publish again.");}
+    else if(["not_writer","not_granted","consent_required","capability_disabled","capability_removed","not_declared"].includes(code)){try{sessionStorage.removeItem(DRAFT_KEY);}catch(x){}showEditing(false);edErr("You can read this site but not edit it. Ask the owner to share it with you with edit access.");}
+    else if(code==="rate_limited"){edErr("Too many saves in a short time. Wait a minute, then press Publish again.");}
+    else if(code==="too_large"){edErr("The site has grown too large to save. Delete a few of the oldest stories, then try again.");}
+    else{edErr("Saving didn't go through. Your text is still here, so press Publish again.");}
+    return false;
+  }
+}
+$("#edForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const f=readForm();
+  if(!f.title)return edErr("Add a headline.");
+  if(!f.d)return edErr("Pick a date.");
+  if(!f.author)return edErr("Add your name so readers know who wrote it.");
+  if(!f.body.length)return edErr("Write the story first.");
+  store.set("meridian-author",f.author);
+  let id=editing?editing.id:`${slug(f.title)}-${f.d}`;
+  if(!editing){let n=2;const base=id;while(STORIES.some(s=>s.id===id))id=`${base}-${n++}`;}
+  const story={id,...f};
+  const next=editing?STORIES.map(s=>s.id===editing.id?story:s):[story,...STORIES];
+  next.sort((a,b)=>a.d===b.d?0:(a.d<b.d?1:-1));
+  await publishStories(next,editing?"Changes saved. Reloading…":"Story published. Reloading…",{...f,editingId:editing?editing.id:null});
+});
+$("#edDel").addEventListener("click",async()=>{
+  const b=$("#edDel");
+  if(!b.classList.contains("armed")){b.classList.add("armed");b.textContent="Tap again to delete";setTimeout(()=>{b.classList.remove("armed");b.textContent="Delete story"},4000);return;}
+  if(!editing)return;
+  await publishStories(STORIES.filter(s=>s.id!==editing.id),"Story deleted. Reloading…",null);
+});
+$("#edClose").onclick=closeEditor;$("#edCancel").onclick=closeEditor;
+$("#writeBtn").onclick=()=>openEditor(null);
+$("#rEdit").onclick=()=>{if(current){const s=current;closeStory();openEditor(s);}};
+(async()=>{
+  if(!window.claude||typeof window.claude.use!=="function"){showEditing(false);return;}
+  try{
+    const [art,user]=await Promise.all([window.claude.use("artifact"),window.claude.use("user")]);
+    ART=art;
+    let ok=false;
+    if(art&&user){try{ok=!!(await user.canEdit());}catch(e){ok=false;}}
+    showEditing(ok);
+    if(ok){
+      let draft=null;try{draft=JSON.parse(sessionStorage.getItem(DRAFT_KEY)||"null");}catch(e){}
+      if(draft){
+        const landed=STORIES.some(s=>s.title===draft.title&&s.d===draft.d&&(s.body||[]).join("\n")===(draft.body||[]).join("\n"));
+        if(landed){try{sessionStorage.removeItem(DRAFT_KEY);}catch(e){}}
+        else openEditor(draft.editingId?STORIES.find(s=>s.id===draft.editingId)||null:null,draft);
+      }
+    }
+  }catch(e){showEditing(false);}
+})();
+
+/* ---------- Events ---------- */
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200)}
+function toggleSave(id){
+  if(saved.has(id)){saved.delete(id);toast("Removed from saved")}else{saved.add(id);toast("Saved for later")}
+  store.set("meridian-saved",[...saved]);updateSavedBadge();
+  document.querySelectorAll("[data-save]").forEach(b=>{if(b.dataset.save===id)b.setAttribute("aria-pressed",saved.has(id))});
+  syncReaderSave();if(state.savedOnly)renderGrid();
+}
+document.addEventListener("click",e=>{
+  if(!e.target.closest)return;
+  const sv=e.target.closest("[data-save]");if(sv){e.stopPropagation();toggleSave(sv.dataset.save);return}
+  const op=e.target.closest("[data-open]");if(op){closeSearch();openStory(op.dataset.open);return}
+  const cd=e.target.closest(".card");if(cd){openStory(cd.dataset.id);return}
+  const ct=e.target.closest("[data-cat]");if(ct){state.savedOnly=false;state.cat=ct.dataset.cat;renderAll();return}
+  if(e.target.closest("#hero")&&LEAD)openStory(LEAD.id);
+});
+$("#hero").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&LEAD){e.preventDefault();openStory(LEAD.id)}});
+$("#rClose").onclick=closeStory;
+$("#rSave").onclick=()=>current&&toggleSave(current.id);
+$("#rCopy").onclick=()=>{
+  const link=location.href.split("#")[0]+"#"+(current?current.id:"");
+  try{navigator.clipboard.writeText(link).then(()=>toast("Link copied"),()=>toast("Copy blocked here. Use the address bar"))}catch(err){toast("Copy blocked here. Use the address bar")}
+};
+$("#openSearch").onclick=openSearch;$("#closeSearch").onclick=closeSearch;
+$("#savedBtn").onclick=()=>{state.savedOnly=!state.savedOnly;renderAll();$("#gridTitle").scrollIntoView({behavior:reduce?"auto":"smooth",block:"center"})};
+$("#themeBtn").onclick=()=>{
+  const root=document.documentElement;
+  const dark=root.dataset.theme?root.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme=dark?"light":"dark";store.set("meridian-theme",root.dataset.theme);
+};
+document.addEventListener("keydown",e=>{
+  const ae=document.activeElement;
+  if(e.key==="Enter"&&ae&&ae.classList&&ae.classList.contains("card")){openStory(ae.dataset.id);return}
+  if(e.key==="Escape"){if(!$("#editor").hidden)closeEditor();else if(!$("#search").hidden)closeSearch();else if(current)closeStory()}
+  const tag=ae?ae.tagName:"";
+  if(e.key==="/"&&!current&&$("#search").hidden&&$("#editor").hidden&&tag!=="INPUT"&&tag!=="TEXTAREA"&&tag!=="SELECT"){e.preventDefault();openSearch()}
+});
+if(matchMedia("(hover:hover) and (pointer:fine)").matches&&!reduce){
+  document.addEventListener("pointermove",e=>{
+    const c=e.target.closest&&e.target.closest(".card");
+    document.querySelectorAll(".card[data-tilt]").forEach(x=>{if(x!==c){x.style.removeProperty("--rx");x.style.removeProperty("--ry");delete x.dataset.tilt}});
+    if(!c)return;const b=c.getBoundingClientRect();
+    c.dataset.tilt="1";c.style.setProperty("--ry",((e.clientX-b.left)/b.width-.5)*5+"deg");c.style.setProperty("--rx",(.5-(e.clientY-b.top)/b.height)*5+"deg");
+  });
+}
+let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{paintCards();if(current)paint($("#rCanvas"),current);if(reduce&&LEAD)paint(heroCv,LEAD)},150)});
+
+/* ---------- Boot ---------- */
+const th=store.get("meridian-theme",null);if(th)document.documentElement.dataset.theme=th;
+$("#today").textContent=new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+showEditing(false);
+renderHero();renderTicker();renderDays();renderRotation();renderStreak();updateSavedBadge();renderAll();
+if(LEAD){paint(heroCv,LEAD,0);if(!reduce)requestAnimationFrame(heroLoop);}
+document.fonts&&document.fonts.ready.then(paintCards);
+const h=location.hash.slice(1);if(h&&STORIES.some(s=>s.id===h))openStory(h,false);
+})();
+</script>
+
+</body></html>
