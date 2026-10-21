@@ -48,7 +48,7 @@ h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:
 .badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--hot);color:#13152E;font:600 10px/18px var(--f-mono);text-align:center;padding:0 4px}
 .write{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 15px;border-radius:999px;background:var(--ink);color:var(--bg);font:600 14px var(--f-display);transition:transform .2s}
 .write:hover{transform:translateY(-1px)}
-@media (max-width:860px){.nav{display:none}}
+@media (max-width:860px){.mast .wrap{flex-wrap:wrap;row-gap:8px}.nav{order:3;flex:0 0 100%;margin-left:0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}.nav::-webkit-scrollbar{display:none}.nav .chip{flex:0 0 auto;white-space:nowrap}}
 @media (max-width:420px){.write span{display:none}.write{padding:0 11px}}
 
 /* Ticker */
@@ -634,7 +634,7 @@ document.addEventListener("click",e=>{
   const sv=e.target.closest("[data-save]");if(sv){e.stopPropagation();toggleSave(sv.dataset.save);return}
   const op=e.target.closest("[data-open]");if(op){closeSearch();openStory(op.dataset.open);return}
   const cd=e.target.closest(".card");if(cd){openStory(cd.dataset.id);return}
-  const ct=e.target.closest("[data-cat]");if(ct){state.savedOnly=false;state.cat=ct.dataset.cat;renderAll();return}
+  const ct=e.target.closest("[data-cat]");if(ct){state.savedOnly=false;state.cat=ct.dataset.cat;renderAll();if(matchMedia("(max-width:860px)").matches)$("#gridTitle").scrollIntoView({behavior:reduce?"auto":"smooth",block:"center"});return}
   if(e.target.closest("#hero")&&LEAD)openStory(LEAD.id);
 });
 $("#hero").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&LEAD){e.preventDefault();openStory(LEAD.id)}});
